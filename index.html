@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scopri che pesce sei – Test di Personalità</title>
+  <meta name="description" content="Test gratuito: 7 domande, 5 opzioni. Scopri se sei Pesce Gatto, Siluro, Storione, Carpa o Anguilla.">
+  <style>
+    :root{ --bg:#0e141b; --border:#1f2a37; --text:#e5f0ff; --muted:#94a3b8; --accent:#57c1ff; --accent-2:#8effb1; --panel: rgba(255,255,255,.03); }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:#0e141b; color:var(--text); line-height:1.6; }
+    header{ padding:32px 16px 8px; text-align:center; }
+    header h1{ margin:0; font-weight:800; letter-spacing:.2px; font-size:clamp(1.5rem,3.5vw,2.2rem); }
+    header p{ margin:.35rem 0 0; color:var(--muted); font-size:clamp(.95rem,2.2vw,1.05rem); }
+    .container{ max-width:980px; margin:16px auto 56px; padding:0 16px; }
+    .card{ border:1px solid var(--border); border-radius:20px; overflow:hidden; background:var(--panel); box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    .card-body{ padding:18px; }
+    .q{ padding:14px; margin:12px 0; border:1px solid var(--border); border-radius:16px; background:var(--panel); }
+    .q h3{ margin:0 0 8px; font-size:1.05rem; }
+    .options{ display:grid; gap:8px; }
+    label.option{ display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.02); cursor:pointer; transition:.12s ease; }
+    label.option:hover{ background:rgba(255,255,255,.05); }
+    input[type="radio"]{ margin-top:3px; transform:scale(1.05); }
+    .field-grid{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media(min-width:700px){ .field-grid{ grid-template-columns:1fr 1fr; } }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .field input{ background:#0b1420; border:1px solid var(--border); border-radius:10px; color:var(--text); padding:10px 12px; }
+    .actions{ display:flex; gap:10px; align-items:center; padding:12px 16px; border-top:1px solid var(--border); background:var(--panel); }
+    .progress{ flex:1; height:10px; background:#0b1420; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+    .progress>span{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .25s ease; }
+    button{ padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:#152234; color:var(--text); font-weight:700; cursor:pointer; }
+    button.primary{ background:linear-gradient(180deg,#41b6ff,#2a9df7); color:#00243a; border:none; }
+    .result{ display:none; padding:18px; border-top:1px solid var(--border); }
+    .badge{ display:inline-flex; gap:8px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; }
+    .small{ color:var(--muted); font-size:.95rem; }
+    .foot{ color:var(--muted); font-size:.85rem; text-align:center; padding:16px 0 24px; }
+    .hidden{position:absolute;left:-9999px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test di Personalità 🐟 Quale pesce sei?</h1>
+    <p>Rispondi alle 7 domande e scopri la tua energia acquatica dominante.</p>
+  </header>
+
+  <div class="container">
+    <section class="card">
+      <div class="card-body">
+        <form id="quiz-form" autocomplete="on">
+          <fieldset class="q">
+            <h3>Prima di iniziare</h3>
+            <div class="field-grid">
+              <label class="field">
+                <span>Nome e Cognome</span>
+                <input type="text" name="nomeCognome" placeholder="Es. Mario Rossi" required>
+              </label>
+              <label class="field">
+                <span>Città e Provincia</span>
+                <input type="text" name="cittaProvincia" placeholder="Es. Parma (PR)" required>
+              </label>
+            </div>
+          </fieldset>
+
+          <div id="questions-wrap"></div>
+
+          <div class="actions">
+            <button id="btn-reset" type="reset">Reset</button>
+            <button id="btn-submit" type="submit" class="primary">Vedi risultato</button>
+            <div class="progress" aria-label="Progresso compilazione">
+              <span id="progress-bar"></span>
+            </div>
+          </div>
+        </form>
+
+        <div id="result" class="result">
+          <div id="result-badges" style="margin-bottom:8px;"></div>
+          <h2 id="result-title"></h2>
+          <p id="result-text" class="small"></p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <button type="button" id="btn-again">Ricomincia</button>
+            <button type="button" id="btn-copy">Copia risultato</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <p class="foot">Questo test mostra solo il risultato personale sul momento (nessun salvataggio delle risposte).</p>
+  </div>
+
+  <script>
+/* ====== PROFILI ====== */
+const FISH = {
+  "Pesce Gatto": {
+    title: "PESCE GATTO",
+    text: "A TE PROPI UN PASGÀT! A volte un pò superficiale e distratto, prendi la vita con leggerezza. Non ti fai troppi problemi, e spesso sei quello che riesce a strappare una risata agli altri con la tua spontaneità. Sei frivolo, allegro, capace di divertirti anche nelle situazioni più banali. E alla fine, tutti ti vogliono bene perché porti leggerezza ovunque. Bravo Pesce Gatto: ti sei guadagnato l’adesivo speciale, vieni a ritirarlo al banchetto della Risalita dei pesci!"
+  },
+  "Siluro": {
+    title: "SILURO",
+    text: "Sei un SILURO, il gigante del fiume! Forte, energico e deciso, quando entri in una situazione non passi inosservato. Sei un leader naturale, ami prendere in mano le cose e non hai paura di buttarti nelle sfide più impegnative. Attento però a non occupare troppo spazio: a volte la tua potenza può mettere in ombra gli altri. Ma nel complesso, sei carisma puro."
+  },
+  "Storione": {
+    title: "STORIONE",
+    text: "Sei uno STORIONE, antico e saggio. Hai memoria, profondità e spesso sei il punto di riferimento per chi ti sta vicino. Non corri dietro alle mode, preferisci la stabilità e la tradizione, e gli amici ti vedono come una persona affidabile, che dà sicurezza. Forse non sei il più rumoroso del gruppo, ma quando parli, lasci il segno."
+  },
+  "Carpa": {
+    title: "CARPA",
+    text: "Sei una CARPA: tranquillo, socievole, un amico vero. Ti piace la serenità, non ami i conflitti e sei quello che riesce sempre a riportare l’armonia nel gruppo. Non hai bisogno di stare al centro dell’attenzione, preferisci circondarti di persone con cui ti senti bene. Sei il collante che tiene unito il branco: affidabile, dolce e sempre disponibile."
+  },
+  "Anguilla": {
+    title: "ANGUILLA",
+    text: "Sei un’ANGUILLA: misterioso, creativo, imprevedibile. Gli altri non sanno mai cosa aspettarsi da te, e questo ti rende affascinante. Ami uscire dagli schemi, sorprendere con idee diverse e a volte sembri quasi inafferrabile. Non ti piace essere imbrigliato: sei libero e indipendente, e chi ti conosce non si annoia mai."
+  }
+};
+
+/* ====== MIX a 2 (parità) ====== */
+const TIE_RESULTS = {
+  "Anguilla|Carpa": {
+    title: "Mix: ANGUILLA + CARPA",
+    text: "Sei un connettore creativo. Hai il gusto dell’imprevisto ma senza perdere la gentilezza: cerchi l’armonia nel gruppo e allo stesso tempo sparigli con idee originali che fanno sorridere e riflettere. Con te le persone si sentono a proprio agio, perché riesci a combinare empatia e fantasia: sai coinvolgere, proporre alternative e trasformare un incontro normale in qualcosa di speciale."
+  },
+  "Anguilla|Pesce Gatto": {
+    title: "Mix: ANGUILLA + PESCE GATTO",
+    text: "Ironia e immaginazione ti vengono naturali. Prendi la vita con leggerezza ma non per questo sei superficiale: la tua creatività spunta dove gli altri vedono routine, e spesso sei tu a cambiare l’umore di una stanza con una battuta o un’idea fuori dal coro. Spontaneo, versatile, sorprendi senza fare rumore e lasci dietro di te buonumore e curiosità."
+  },
+  "Anguilla|Siluro": {
+    title: "Mix: ANGUILLA + SILURO",
+    text: "Visione e azione: sogni soluzioni diverse e poi trovi il modo di farle accadere davvero. Hai il coraggio di osare e la fantasia per tracciare strade nuove. Guida naturale, ma mai scontata: la tua energia è magnetica e inviti gli altri a buttarsi in esperienze che raccontano chi sei, con una scintilla di sana follia."
+  },
+  "Anguilla|Storione": {
+    title: "Mix: ANGUILLA + STORIONE",
+    text: "Originale con profondità. Ami esplorare strade non battute, ma lo fai con giudizio e memoria. Sai dare un senso alle novità, collegandole a ciò che conta davvero. Le persone si fidano di te perché unisci creatività e saggezza: non cerchi solo l’effetto wow, ma un significato che resti."
+  },
+  "Carpa|Pesce Gatto": {
+    title: "Mix: CARPA + PESCE GATTO",
+    text: "Il tuo superpotere è portare leggerezza nelle relazioni. Fai gruppo, smorzi i conflitti e ricordi agli altri che si può stare bene anche nelle piccole cose. Sei accogliente e scanzonato al punto giusto: con te, ogni cena ha il suo momento di risate sincere e feeling vero."
+  },
+  "Carpa|Siluro": {
+    title: "Mix: CARPA + SILURO",
+    text: "Guida e ascolto: sai tenere il timone senza perdere di vista chi hai accanto. Pratico, deciso, ma capace di creare unità: trasformi gli obiettivi in azione e ti assicuri che tutti si sentano parte del viaggio. Il risultato? Una spinta in avanti che non schiaccia nessuno."
+  },
+  "Carpa|Storione": {
+    title: "Mix: CARPA + STORIONE",
+    text: "Stabilità che rassicura. Dai valore a tradizioni, memoria e qualità del tempo insieme. Quando c’è bisogno di equilibrio, sei il punto fermo: ascolti, organizzi, riporti calma. Le persone ti cercano perché con te ritrovano serenità e chiarezza, senza bisogno di grandi effetti speciali."
+  },
+  "Pesce Gatto|Siluro": {
+    title: "Mix: PESCE GATTO + SILURO",
+    text: "Carisma con sorriso. Ti butti nelle cose e trascini gli altri, ma con quella ironia che rende tutto più leggero. Sei energia che unisce: sai alleggerire la tensione, motivare e accendere l’entusiasmo del gruppo. Impossibile non seguirti — e divertirsi."
+  },
+  "Pesce Gatto|Storione": {
+    title: "Mix: PESCE GATTO + STORIONE",
+    text: "Leggerezza consapevole. Sai quando scherzare e quando andare a fondo: alterni momenti ironici a riflessioni che restano. Stai bene nelle tradizioni, ma ci metti il tuo tocco brillante. Il risultato è un equilibrio unico tra profondità e spontaneità."
+  },
+  "Siluro|Storione": {
+    title: "Mix: SILURO + STORIONE",
+    text: "Decisione con visione lunga. Prendi in mano le situazioni con fermezza e responsabilità, ragionando sul quadro d’insieme. Affidabile e autorevole, ispiri fiducia perché unisci coraggio e prudenza: sai accelerare quando serve, ma con una rotta chiara."
+  }
+};
+function tieKey(a,b){ return [a,b].sort().join("|"); }
+
+/* ====== DOMANDE ====== */
+const QUESTIONS = [
+  { q: "Domanda 1: Sei a una cena con amici. Ti servono un piatto che non conosci..",
+    options: [
+      ["Lo assaggio senza sapere cos’è, tanto… che sarà mai!", "Pesce Gatto"],
+      ["Voglio capire bene cosa c’è dentro prima di provarlo", "Storione"],
+      ["Lo condivido con tutti, così è più divertente", "Carpa"],
+      ["Ne mangio un po’, poi mi invento una scusa strana", "Anguilla"],
+      ["Mi butto e lo mangio tutto senza pensarci due volte", "Siluro"]
+    ]},
+  { q: "Domanda 2: Se il tuo weekend fosse un film, che genere sarebbe?",
+    options: [
+      ["Commedia stile una notte da leoni, dove il giorno dopo non ti ricordi più nulla", "Pesce Gatto"],
+      ["Saltare da un palazzo in fiamme con una mustang? Ogni weekend", "Siluro"],
+      ["Un bel film storico sul divano, camino acceso", "Storione"],
+      ["Commedia comica, un tavolo, piatti di ogni genere e risate a non finire", "Carpa"],
+      ["Mistero e incontri sovrannaturali", "Anguilla"]
+    ]},
+  { q: "Domanda 3: Se fossi un drink, quale saresti?",
+    options: [
+      ["Un gin tonic come si deve", "Pesce Gatto"],
+      ["Un vino rosso corposo", "Storione"],
+      ["Una cochina ghiaccio e limone", "Carpa"],
+      ["Un cocktail inedito, improvvisato al momento", "Anguilla"],
+      ["Un Negroni o uno Sbagliato", "Siluro"]
+    ]},
+  { q: "Domanda 4: In un gruppo di lavoro tu sei quello che…",
+    options: [
+      ["Dice \"ci pensiamo domani\" e intanto scrolla i reel su instagram", "Pesce Gatto"],
+      ["Mette ordine e tiene memoria di tutto", "Storione"],
+      ["Tiene unito il gruppo e smorza i conflitti", "Carpa"],
+      ["Trova la soluzione più bizzarra, ma che funziona", "Anguilla"],
+      ["Prende in mano la situazione e decide", "Siluro"]
+    ]},
+  { q: "Domanda 5: Sei in viaggio e ti perdi. Cosa fai?",
+    options: [
+      ["Scatto un selfie instagrammabile e me la rido", "Pesce Gatto"],
+      ["Controllo la mappa e cerco di ritornare sui miei passi", "Storione"],
+      ["Chiedo indicazioni con calma a qualcuno", "Carpa"],
+      ["Vado a caso, convinto che sia un’avventura", "Anguilla"],
+      ["Seguo l’istinto e cammino dritto fino a destinazione", "Siluro"]
+    ]},
+  { q: "Domanda 6: In una cena con amici, tu sei quello che…",
+    options: [
+      ["Commenta ironicamente dietro le quinte come la Giallapa's Band", "Pesce Gatto"],
+      ["Racconta vecchi aneddoti e fa riflettere tutti", "Storione"],
+      ["Fa partire i brindisi e mette d’accordo t]()
